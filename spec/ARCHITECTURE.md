@@ -398,3 +398,27 @@
 - [Next.js Blog – releases](https://nextjs.org/blog)
 - [Resend – Pricing](https://resend.com/pricing) ו-[סקירת מגבלות Free Tier 2026](https://automationatlas.io/answers/resend-free-tier-explained-2026/)
 - [Anthropic – Claude API Documentation](https://platform.claude.com/docs)
+
+---
+
+## החלטות מרכזיות (ADRs)
+
+### ADR-1: Select כ-`<select>` רגיל של הדפדפן, מעוצב
+**הקשר:** נדרש רכיב Select (עיר, מספר חדרים, מצב הנכס). ל-shadcn/ui יש Select מבוסס Radix, שמצייר רשימה מותאמת אישית.
+**החלטה:** הרכיב `components/ui/select.tsx` הוא `<select>` רגיל של הדפדפן, בעיצוב של שדות הקלט ועם חץ בצד שמאל.
+**השלכות:** הערך נשלח אוטומטית בטפסים של Server Actions (‏`FormData`), בלי קוד נוסף. במובייל נפתח בורר המערכת המוכר. הרשימה הפתוחה עצמה מוצגת בעיצוב של הדפדפן ולא בעיצוב המותג.
+
+### ADR-2: ‏lucide-react כסט האייקונים
+**הקשר:** ה-Style Guide מגדיר אייקוני Line בגודל 24px, קו בעובי 1.75px ופינות מעוגלות.
+**החלטה:** משתמשים ב-`lucide-react` (הסט המובנה של shadcn/ui). המיפוי לשמות של ה-Style Guide נמצא ב-`components/icons.tsx`, עם עובי קו 1.75 כברירת מחדל.
+**השלכות:** אין צורך לצייר אייקונים. אייקון חדש מוסיפים רק דרך `components/icons.tsx`, כדי לשמור על סט אחיד.
+
+### ADR-3: קובץ הסודות המקומי הוא `.env` ולא `.env.local`
+**הקשר:** סעיף 2.9 ו-MILESTONES.md מתייחסים ל-`.env.local`, בעוד שהנחיות העבודה בפרויקט (`CLAUDE.md`) קובעות `.env`.
+**החלטה:** באישור המשתמש, הערכים של Development נשמרים ב-`.env`, שנוצר מ-`.env.example`. בכל מקום במסמכים שכתוב `.env.local`, הכוונה ל-`.env`.
+**השלכות:** ‏Next.js טוען את `.env` אוטומטית. ‏`.gitignore` מסתיר את `.env` ואת כל `.env.*` (כולל `.env.local`), חוץ מ-`.env.example`. אסור להוסיף ל-`.env` ערכים של Production.
+
+### ADR-4: ‏Cache Components ו-Partial Prefetching מופעלים
+**הקשר:** ‏Next.js 16.4 יוצר פרויקט חדש עם `cacheComponents: true` ו-`partialPrefetching: true` ב-`next.config.ts`. לפי התיעוד, שתי ההגדרות יהיו ברירת המחדל בגרסה הראשית הבאה.
+**החלטה:** משאירים אותן מופעלות. ‏Redirects קבועים מוגדרים ב-`redirects()` של `next.config.ts` ולא בתוך דף.
+**השלכות:** נתונים נטענים באופן דינמי כברירת מחדל, ושמירה במטמון היא בחירה מפורשת (`use cache`). בבנייה של Milestones הבאים צריך לקרוא את המדריכים שב-`node_modules/next/dist/docs/` לפני שימוש ב-`cookies()`, ‏`headers()` או טעינת נתונים בדפים.

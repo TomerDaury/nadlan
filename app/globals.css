@@ -1,0 +1,132 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/*
+ * Design tokens — source of truth: spec/DESIGN.md §2 and spec/style-guide.png.
+ * Light theme only (the design defines no dark mode).
+ */
+
+@theme {
+  /* Brand (orange) */
+  --color-brand-500: #ff7a1a; /* Primary */
+  --color-brand-600: #e5650a; /* Hover / pressed, outline text */
+  --color-brand-700: #b5530f; /* Text on tint */
+  --color-brand-50: #fff1e6; /* Tint */
+  --color-accent-purple: #7b3fe4; /* "New" badge only */
+
+  /* Neutrals & semantic */
+  --color-ink: #2b2b2b;
+  --color-slate-text: #6b6b6b;
+  --color-muted-text: #8a8a8a;
+  --color-line: #e3e3e3;
+  --color-mist: #f4f4f4;
+  --color-success: #1e9e5a;
+  --color-success-bg: #e6f5ec;
+  --color-error: #d93025;
+
+  /* Helper colors */
+  --color-input-border: #d6d6d6;
+  --color-focus-ring: #ffe3cc;
+  --color-notice-bg: #fff8f2;
+  --color-notice-border: #ffd2ae;
+  --color-table-head: #fafafa;
+  --color-row-divider: #f0f0f0;
+
+  /* Typography scale (size / line-height) */
+  --text-display: 48px;
+  --text-display--line-height: 56px;
+  --text-h1: 36px;
+  --text-h1--line-height: 44px;
+  --text-h2: 28px;
+  --text-h2--line-height: 36px;
+  --text-h3: 22px;
+  --text-h3--line-height: 30px;
+  --text-body-l: 18px;
+  --text-body-l--line-height: 28px;
+  --text-body: 16px;
+  --text-body--line-height: 24px;
+  --text-small: 14px;
+  --text-small--line-height: 20px;
+  --text-caption: 12px;
+  --text-caption--line-height: 16px;
+
+  /* Corner radius */
+  --radius-tag: 6px;
+  --radius-menu: 8px;
+  --radius-input: 10px;
+  --radius-card: 14px;
+  --radius-panel-lg: 20px;
+  --radius-pill: 999px;
+
+  /* Shadows */
+  --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.09);
+  --shadow-floating: 0 6px 20px rgba(0, 0, 0, 0.16);
+}
+
+@theme inline {
+  --font-sans: var(--font-rubik), Arial, sans-serif;
+  --font-heading: var(--font-rubik), Arial, sans-serif;
+
+  /* shadcn/ui semantic colors, mapped to the style guide */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+}
+
+:root {
+  --background: #f4f4f4; /* Mist */
+  --foreground: #2b2b2b; /* Ink */
+  --card: #ffffff;
+  --card-foreground: #2b2b2b;
+  --popover: #ffffff;
+  --popover-foreground: #2b2b2b;
+  --primary: #ff7a1a;
+  --primary-foreground: #ffffff;
+  --secondary: #fff1e6;
+  --secondary-foreground: #b5530f;
+  --muted: #f4f4f4;
+  --muted-foreground: #6b6b6b;
+  --accent: #fff1e6;
+  --accent-foreground: #b5530f;
+  --destructive: #d93025;
+  --border: #e3e3e3;
+  --input: #d6d6d6;
+  --ring: #ff7a1a;
+  --radius: 10px;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+  }
+  body {
+    @apply bg-background text-body text-foreground antialiased;
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+}
