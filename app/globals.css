@@ -130,3 +130,8 @@
     cursor: pointer;
   }
 }
+
+/* Chatling chatbot: hidden on every screen except the request form (ADR-14). */
+html[data-hide-chatbot] [id^="chtl-chat"] {
+  display: none !important;
+}
