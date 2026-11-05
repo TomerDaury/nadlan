@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "cn";
@@ -11,9 +12,21 @@ const NAV_ITEMS: { href: string; label: string; icon: IconName }[] = [
 ];
 
 // Side menu on desktop (right side in RTL); horizontal top menu on small screens.
+// usePathname() is request data on dynamic routes, so the active item streams in;
+// the fallback renders the same menu without highlighting.
 export function AdminSidebar() {
-  const pathname = usePathname();
+  return (
+    <Suspense fallback={<SidebarNav pathname={null} />}>
+      <ActiveSidebarNav />
+    </Suspense>
+  );
+}
 
+function ActiveSidebarNav() {
+  return <SidebarNav pathname={usePathname()} />;
+}
+
+function SidebarNav({ pathname }: { pathname: string | null }) {
   return (
     <nav
       aria-label="תפריט ניהול"
@@ -21,7 +34,7 @@ export function AdminSidebar() {
     >
       <ul className="flex gap-1 overflow-x-auto p-2 md:sticky md:top-16 md:flex-col md:p-3">
         {NAV_ITEMS.map((item) => {
-          const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+          const active = pathname !== null && (pathname === item.href || pathname.startsWith(`${item.href}/`));
           return (
             <li key={item.href}>
               <Link

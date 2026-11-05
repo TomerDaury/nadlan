@@ -15,7 +15,7 @@
 | **UI** | **Tailwind CSS** ו-**shadcn/ui** (מבוסס Radix UI) | אתר רספונסיבי (Desktop, עם התאמה מלאה למובייל) ותמיכה מלאה ב-RTL. רכיבי טפסים, דיאלוגים וטבלאות נגישים. |
 | **ולידציה** | **Zod** | סכמה אחת לבדיקת קלט, שמשמשת גם בצד הלקוח וגם בצד השרת. |
 | **Database** | **Supabase Postgres** | מסד נתונים רלציוני: נכסים, פניות, התאמות ותור מיילים. |
-| **Authentication** | **Supabase Auth** עם **Google OAuth** | התחברות הסוכן דרך חשבון Gmail. המערכת לא מנהלת סיסמאות. |
+| **Authentication** | **Supabase Auth** עם **מייל וסיסמה** | חשבון סוכן יחיד שנוצר ידנית, וההרשמה העצמית סגורה. הסיסמה נשמרת מוצפנת ב-Supabase Auth, לא באפליקציה. |
 | **אחסון קבצים** | **Supabase Storage** | תמונות הנכסים. |
 | **גישה לנתונים** | `@supabase/supabase-js` ו-`@supabase/ssr` | Clients לשרת ולדפדפן, וניהול ה-Session של הסוכן ב-Cookies. |
 | **Database Migrations** | **Supabase CLI** (npm package `supabase`, devDependency) | קבצי SQL בתיקייה `supabase/migrations/`. המיגרציות מורצות מול הענן בלבד, בלי Docker. |
@@ -27,7 +27,7 @@
 ### 1.2 נימוקים להחלטות המרכזיות
 
 - **Next.js כאפליקציה אחת.** למוצר יש שני ממשקים קטנים (לקוח וסוכן) ולוגיקת שרת מצומצמת. Next.js נותן Frontend ו-Backend בקוד אחד, בשפה אחת ובפריסה אחת, בלי צורך בשרת API נפרד. זה ה-Framework הנפוץ ביותר ל-React, יש לו תיעוד מקיף, ו-Vercel תומכת בו באופן מובנה, מה שהופך אותו לבחירה הטבעית לפיתוח בעזרת AI. החלופות שנבחנו היו Remix/React Router ו-SvelteKit, שהן טובות אבל עם אקוסיסטם ותמיכה מצומצמים יותר.
-- **Supabase.** המוצר דורש מסד נתונים רלציוני (נכסים, פניות וקשרים ביניהם), התחברות עם Google ואחסון תמונות. Supabase נותן את שלושתם בשירות אחד שמבוסס על PostgreSQL, כולל Row Level Security (RLS). החלופות שנבחנו היו Neon יחד עם Auth.js ו-Vercel Blob, אבל זה פיצול לשלושה שירותים ויותר קוד הזדהות לתחזק. Firebase נפסל, כי הוא NoSQL ואין הצדקה ל-NoSQL במוצר הזה.
+- **Supabase.** המוצר דורש מסד נתונים רלציוני (נכסים, פניות וקשרים ביניהם), הזדהות ואחסון תמונות. Supabase נותן את שלושתם בשירות אחד שמבוסס על PostgreSQL, כולל Row Level Security (RLS). החלופות שנבחנו היו Neon יחד עם Auth.js ו-Vercel Blob, אבל זה פיצול לשלושה שירותים ויותר קוד הזדהות לתחזק. Firebase נפסל, כי הוא NoSQL ואין הצדקה ל-NoSQL במוצר הזה.
 - **Claude API להבנת שפה טבעית.** נדרשת קריאה אחת לכל פנייה: המערכת שולחת את הטקסט של הלקוח ואת רשימת הנכסים המועמדים, ומקבלת בחזרה דירוג ונימוקים. היא משתמשת ב-Structured Outputs כדי שהתשובה תחזור כ-JSON מובנה. אין צורך ב-Embeddings או ב-Vector Database, כי הסינון הקשיח ב-SQL מצמצם את המועמדים למספר קטן, והמאגר של סוכן יחיד קטן ממילא. המודל `claude-opus-5-5` מטפל היטב בעברית ובנימוק קפדני שמבוסס על הנתונים בלבד. בקריאה הזו הוא מורץ ב-`effort: "low"`, ולכן העלות של כל פנייה נמוכה (סדר גודל של סנטים בודדים).
 - **Resend.** זה שירות Email API פשוט עם SDK רשמי ל-TypeScript, אינטגרציה טבעית עם React Email ו-Batch API ששולח עד 100 מיילים בקריאה אחת. החלופות שנבחנו היו Postmark ו-Amazon SES. ‏Postmark טוב אבל יקר יותר. SES זול, אבל ההגדרה והתפעול שלו מורכבים יותר.
 - **Vercel Pro.** תוכנית Hobby מיועדת **לשימוש לא מסחרי בלבד**, ומערכת של סוכן נדל"ן היא שימוש מסחרי. בנוסף, ב-Hobby אפשר להריץ Cron רק פעם ביום, בעוד שב-Pro אפשר כל דקה. מנגנון הניסיונות החוזרים לשליחת מיילים צריך תדירות גבוהה יותר.
@@ -65,7 +65,7 @@
  לקוח (דפדפן) ─▶│  Next.js App                                                    │
                 │   ├─ Public UI (טופס, דף אישי)        ┐                          │
  סוכן (מחשב) ──▶│   ├─ Admin UI (נכסים, פניות)          ├─ Server Actions / Routes │
-                │   ├─ /auth/callback (Google OAuth)    │                          │
+                │   ├─ /admin/login (מייל + סיסמה)      │                          │
                 │   └─ /api/cron/email-outbox (Cron)    ┘                          │
                 │            │ Domain Services: matching, requests, properties,    │
                 │            │ notifications, email                                │
@@ -74,7 +74,7 @@
         ┌────────────────────┼──────────────────────┬─────────────────────┐
         ▼                    ▼                      ▼                     ▼
   Supabase Postgres    Supabase Auth          Supabase Storage      Claude API / Resend
-  (נתונים + RLS)        (Google OAuth)         (תמונות נכסים)        (AI / מיילים)
+  (נתונים + RLS)        (מייל + סיסמה)         (תמונות נכסים)        (AI / מיילים)
 ```
 
 כל הקריאות לשירותים חיצוניים (Claude ו-Resend) והקריאות שמשתמשות במפתח הסודי של Supabase מתבצעות **בשרת בלבד**. הדפדפן לא מקבל אף מפתח סודי.
@@ -84,7 +84,7 @@
 | שכבה | אחריות | תוכן עיקרי |
 |---|---|---|
 | **UI** (`app/`) | דפים ורכיבים בעברית ובכיוון RTL | Server Components להצגה, ו-Client Components רק למקומות שצריכים אינטראקציה, כמו טפסים והעלאת תמונות. |
-| **Actions / Routes** | נקודות כניסה לשרת | Server Actions לטפסים, ו-Route Handlers ל-OAuth callback ול-Cron. הן אחראיות רק על ולידציה בעזרת Zod, הרשאות וקריאה ל-Domain Services. |
+| **Actions / Routes** | נקודות כניסה לשרת | Server Actions לטפסים, ו-Route Handlers ל-Cron. הן אחראיות רק על ולידציה בעזרת Zod, הרשאות וקריאה ל-Domain Services. |
 | **Domain Services** (`lib/services/`) | הלוגיקה העסקית | ראו טבלת ה-Modules בהמשך. |
 | **Integrations** (`lib/integrations/`) | עטיפה של שירותים חיצוניים | `supabase` (Clients), ‏`claude` (קריאה למודל), ‏`resend` (שליחה). |
 | **Data** (`supabase/migrations/`) | סכמה, RLS ו-Storage policies | קבצי SQL שמנוהלים ב-Git. |
@@ -109,8 +109,7 @@
 | `/r/[token]/edit` | לקוח | עדכון הקריטריונים. |
 | `/r/[token]/properties/[id]` | לקוח | פרטי נכס מלאים: כל התמונות והתיאור. הנכס מוצג רק אם הוא מקושר לפנייה הזו. |
 | `/r/[token]/unsubscribe` | לקוח | מסך אישור לפני הפסקת עדכונים. הפעולה עצמה מתבצעת ב-POST ולא ב-GET, כדי שסורקי קישורים בתוכנות מייל לא יפסיקו את העדכונים בטעות. |
-| `/admin/login` | סוכן | כפתור "התחברות עם Google". |
-| `/auth/callback` | סוכן | Route Handler שמחליף את קוד ה-OAuth ב-Session. |
+| `/admin/login` | סוכן | שדות מייל וסיסמה וכפתור "כניסה". |
 | `/admin/properties` | סוכן | רשימת נכסים, הוספה, עריכה ומחיקה (F8). |
 | `/admin/properties/new`, `/admin/properties/[id]` | סוכן | טופס נכס והעלאת תמונות. |
 | `/admin/requests`, `/admin/requests/[id]` | סוכן | רשימת פניות ופרטי פנייה לקריאה בלבד (F9). |
@@ -214,7 +213,7 @@
 
 | שדה | סוג | הערות |
 |---|---|---|
-| `email` | text PK | כתובת ה-Gmail של הסוכן. מוזנת ידנית בכל סביבה (ראו סעיף 2.10). |
+| `email` | text PK | כתובת המייל של הסוכן. מוזנת ידנית בכל סביבה (ראו סעיף 2.10). |
 
 **View ‏`available_areas`** – ערים ושכונות ייחודיות של נכסים בסטטוס `available`. מהן נבנית הרשימה הסגורה בטופס.
 
@@ -232,7 +231,6 @@
 | `updateCriteria(token, form)` | Server Action | בעל הטוקן |
 | `setNotifications(token, active)` | Server Action | בעל הטוקן |
 | `createProperty` / `updateProperty` / `deleteProperty` | Server Actions | סוכן |
-| `GET /auth/callback` | Route Handler | זרימת OAuth |
 | `GET /api/cron/email-outbox` | Route Handler | Vercel Cron בלבד. הבקשה מאומתת בעזרת `Authorization: Bearer ${CRON_SECRET}`. |
 
 כל קריאת נתונים לדפים מתבצעת ישירות מ-Server Components. אין REST API ציבורי.
@@ -243,7 +241,7 @@
 |---|---|---|
 | **Claude API** | דירוג ונימוק (F2) | קריאה אחת ל-`messages.create` עם `model: "claude-opus-5-5"`, ‏`output_config: { effort: "low", format: <JSON Schema> }` ו-`fallbacks: "default"` (beta `server-side-fallback-2026-07-01`). הקלט כולל את הטקסט של הלקוח ורשימת מועמדים בפורמט JSON (מזהה, מאפיינים ותיאור לכל נכס). הפלט הוא `[{ property_id, rank, reason }]`, עם עד 3 פריטים. Timeout של כ-25 שניות. |
 | **Resend** | שליחת מיילים | `emails.send` לתוצאות פנייה, ו-`batch.send` (עד 100 בקריאה) לעדכונים על נכס חדש. התבניות בנויות ב-React Email, עם `dir="rtl"`. |
-| **Google OAuth** (דרך Supabase Auth) | התחברות הסוכן | זרימת PKCE בצד השרת, בעזרת `signInWithOAuth` ו-`exchangeCodeForSession`. |
+| **Supabase Auth – מייל וסיסמה** | התחברות הסוכן | Server Action ‏`signIn` שקורא ל-`signInWithPassword`, ואחריו בודק `is_admin()`. אין שליחת מיילים בתהליך ההתחברות. |
 
 **כללים לקריאה ל-Claude:**
 - ה-System Prompt מנחה את המודל לדרג **רק** מתוך המועמדים שנשלחו, ולנמק **רק** על בסיס השדות שהתקבלו, בעברית ובמשפט עד שלושה משפטים.
@@ -280,10 +278,10 @@
 ### 2.7 Authentication, Authorization, אבטחה ופרטיות
 
 **הסוכן:**
-- ההתחברות מתבצעת רק דרך Google, באמצעות Supabase Auth. ה-Session נשמר ב-Cookies מסוג HttpOnly, בעזרת `@supabase/ssr`.
+- ההתחברות מתבצעת במייל וסיסמה, באמצעות Supabase Auth. ההרשמה העצמית סגורה, וחשבון הסוכן נוצר ידנית. ה-Session נשמר ב-Cookies מסוג HttpOnly, בעזרת `@supabase/ssr`.
 - **ההרשאה נבדקת בשתי שכבות:**
   1. **באפליקציה:** כל דף וכל Action תחת `/admin` קוראים ל-`requireAdmin()`. הפונקציה מאמתת את המשתמש מול Supabase בעזרת `getUser()` ובודקת שהמייל שלו מופיע ב-`admin_users`. אם הבדיקה נכשלת, המשתמש מקבל את ההודעה "אין לך הרשאת גישה לממשק הניהול" ומבוצע Sign-out.
-  2. **ב-Database:** מדיניות RLS מאפשרת ל-Role `authenticated` גישה לטבלאות רק אם `auth.jwt()->>'email'` קיים ב-`admin_users`. משתמשי Google אחרים לא מקבלים גישה לשום נתון, גם אם הצליחו ליצור Session.
+  2. **ב-Database:** מדיניות RLS מאפשרת ל-Role `authenticated` גישה לטבלאות רק אם `auth.jwt()->>'email'` קיים ב-`admin_users`. משתמשים אחרים לא מקבלים גישה לשום נתון, גם אם הצליחו ליצור Session.
 - **חסימת הרשמה:** פונקציית Auth Hook מסוג **Before User Created** דוחה יצירה של משתמש שהמייל שלו לא נמצא ב-`admin_users`. הפונקציה נכתבת ב-Migration, וההפעלה שלה נעשית ב-Dashboard.
 - **Middleware/Proxy:** הקוד הזה רק מרענן את ה-Session. הוא לא משמש כשכבת הגנה יחידה.
 
@@ -365,8 +363,9 @@
 
 | הגדרה | היכן |
 |---|---|
-| Google Provider: ‏Client ID ו-Secret | Supabase Dashboard → Authentication → Providers. מומלץ ליצור OAuth Client נפרד ב-Google Cloud לכל סביבה. |
-| Site URL ו-Redirect URLs | Supabase → Authentication → URL Configuration. ב-Dev: ‏`http://localhost:3000/**` וכתובות ה-Preview ב-Vercel. ב-Prod: הדומיין הראשי בלבד. |
+| הפעלת ה-Data API | Supabase → Integrations → Data API: ‏Enable Data API דלוק, ו-`public` ב-Exposed schemas. בלי זה כל הקריאות לנתונים נכשלות (שגיאה PGRST002). |
+| סגירת ההרשמה העצמית | Supabase → Authentication → Sign In / Providers: ‏"Allow new users to sign up" כבוי. |
+| חשבון הסוכן | Supabase → Authentication → Users → Add user → Create new user: המייל של הסוכן, סיסמה, ו-Auto Confirm User. אותו מייל נכנס גם ל-`admin_users`. |
 | הפעלת Auth Hook מסוג Before User Created | Supabase → Authentication → Hooks. הפונקציה עצמה נוצרת ב-Migration. |
 | רשומת הסוכן ב-`admin_users` | פקודת `insert` חד-פעמית ב-SQL Editor של כל פרויקט. |
 | כל המפתחות והסודות | `.env.local` לסביבת Dev, ו-Vercel Environment Variables לכל סביבה. |
@@ -394,7 +393,7 @@
 - [Supabase – Pricing](https://supabase.com/pricing)
 - [Supabase – Connecting to Postgres (Direct / Session / Transaction pooler, IPv4)](https://supabase.com/docs/guides/database/connecting-to-postgres)
 - [Supabase CLI – db push](https://supabase.com/docs/reference/cli/supabase-db-push)
-- [Supabase – Login with Google](https://supabase.com/docs/guides/auth/social-login/auth-google)
+- [Supabase – Password-based Auth](https://supabase.com/docs/guides/auth/passwords)
 - [Next.js Blog – releases](https://nextjs.org/blog)
 - [Resend – Pricing](https://resend.com/pricing) ו-[סקירת מגבלות Free Tier 2026](https://automationatlas.io/answers/resend-free-tier-explained-2026/)
 - [Anthropic – Claude API Documentation](https://platform.claude.com/docs)
@@ -422,3 +421,28 @@
 **הקשר:** ‏Next.js 16.4 יוצר פרויקט חדש עם `cacheComponents: true` ו-`partialPrefetching: true` ב-`next.config.ts`. לפי התיעוד, שתי ההגדרות יהיו ברירת המחדל בגרסה הראשית הבאה.
 **החלטה:** משאירים אותן מופעלות. ‏Redirects קבועים מוגדרים ב-`redirects()` של `next.config.ts` ולא בתוך דף.
 **השלכות:** נתונים נטענים באופן דינמי כברירת מחדל, ושמירה במטמון היא בחירה מפורשת (`use cache`). בבנייה של Milestones הבאים צריך לקרוא את המדריכים שב-`node_modules/next/dist/docs/` לפני שימוש ב-`cookies()`, ‏`headers()` או טעינת נתונים בדפים.
+
+### ADR-5: העלאת תמונות לפני שמירת הנכס, עם מזהה נכס שנקבע מראש
+**הקשר:** התמונות עולות ישירות מהדפדפן ל-Storage (סעיף 2.11), ונשמרות בתיקייה של הנכס. בנכס חדש עוד אין מזהה ברגע ההעלאה.
+**החלטה:** בטופס "הוספת נכס" השרת קובע מראש מזהה (UUID) לנכס. בלחיצה על "שמירה" הדפדפן מעלה קודם את התמונות החדשות לנתיב `properties/<id>/<uuid>.<ext>`, ורק אחר כך שולח את הטופס עם רשימת הנתיבים. השרת מוודא שכל נתיב שייך לתיקיית הנכס, שיש לכל היותר 10 תמונות ותמונה ראשית אחת. אם הטופס נדחה בגלל שגיאת ולידציה, התמונות שכבר עלו נשמרות בטופס ולא עולות שוב.
+**השלכות:** אם הסוכן עוזב את הטופס אחרי שהתמונות עלו אבל הנכס לא נשמר, יכולים להישאר ב-Bucket קבצים בלי נכס. אלה קבצים ציבוריים ולא רגישים, והם לא מוצגים בשום מקום.
+
+### ADR-6: בדיקת RLS כסקריפט נפרד
+**הקשר:** ה-DoD של Milestone 2 דורש לוודא שאי אפשר לקרוא או לשנות נתונים בלי התחברות. הבדיקה הזו צריכה חיבור אמיתי לפרויקט Development.
+**החלטה:** `npm run check:rls` (‏`scripts/check-rls.mjs`) מתחבר עם המפתח הציבורי בלבד ובודק קריאה, הוספה, עדכון, מחיקה והעלאה ל-Bucket. הוא לא חלק מ-`npm test`.
+**השלכות:** `npm test` נשאר מהיר ולא תלוי ברשת. את בדיקת ה-RLS מריצים אחרי כל Migration שנוגעת בהרשאות.
+
+### ADR-7: ‏Supabase CLI 3 – הדגל `--remote` במקום `--db-url`
+**הקשר:** בגרסה 3 של Supabase CLI, הפקודה `db push` מקבלת את כתובת מסד הנתונים בדגל `--remote=<url>`, ולא ב-`--db-url` כפי שכתוב בסעיפים 2.8 ו-2.10.
+**החלטה:** הסקריפט `scripts/db.mjs` מריץ `supabase db push --remote=<SUPABASE_DB_URL>` (‏`npm run db:push`, ‏`db:seed`, ‏`db:list`), עם המשתנים מ-`.env`. גם סקריפט `vercel-build` של Milestone 7 ישתמש בדגל הזה.
+**השלכות:** בכל מקום במסמכים שכתוב `--db-url`, הכוונה ל-`--remote`.
+
+### ADR-8: התחברות הסוכן בקישור כניסה במייל (Magic Link) במקום Google – **הוחלף ב-ADR-9**
+**הקשר:** ההתחברות עם Google דרשה מהמשתמש, שאינו מתכנת, להקים פרויקט ב-Google Cloud, מסך הסכמה ו-OAuth Client בכל סביבה. המשתמש ביקש דרך פשוטה יותר, שגם היא לא דורשת סיסמה.
+**החלטה:** הסוכן מזין את כתובת המייל שלו ב-`/admin/login`, וה-Server Action ‏`sendLoginLink` קורא ל-`signInWithOtp`. ה-Auth Hook מסוג Before User Created, ‏`requireAdmin()` ומדיניות ה-RLS נשארים בלי שינוי, ולכן רק כתובת שמופיעה ב-`admin_users` יכולה להיכנס. ‏`/auth/callback` מקבל את הקישור בשני הפורמטים: ‏`token_hash`, שעובד בכל דפדפן ומכשיר, ו-`code` (‏PKCE), שעובד רק באותו דפדפן. תבניות המייל ב-Supabase מעודכנות לפורמט `token_hash`.
+**השלכות:** אין צורך ב-Google Cloud. ב-Dev, Supabase שולח את המייל בשירות המובנה שלו, שמוגבל לכמה מיילים בשעה ושולח רק לחברי ה-Organization. ב-Prod מגדירים SMTP של Resend ב-Supabase (Milestone 7). הסוכן תלוי בגישה לתיבת המייל שלו כדי להיכנס. ה-Session נשמר ב-Cookies, כך שלא צריך קישור חדש בכל כניסה.
+
+### ADR-9: התחברות הסוכן במייל וסיסמה (מחליף את ADR-8)
+**הקשר:** בפיתוח, שירות המיילים המובנה של Supabase מאפשר רק כמה מיילים בשעה. אחרי כמה ניסיונות הסוכן לא הצליח להיכנס בכלל. בנוסף, המשתמש העדיף כניסה מיידית, בלי לחכות למייל בכל פעם.
+**החלטה:** הסוכן נכנס במייל וסיסמה (`signInWithPassword`) דרך ה-Server Action ‏`signIn` ב-`/admin/login`. אחרי הכניסה, `is_admin()` נבדק, ומשתמש שאינו ברשימה מנותק מיד. חשבון הסוכן נוצר ידנית ב-Supabase Dashboard עם Auto Confirm, וההרשמה העצמית ("Allow new users to sign up") כבויה. ה-Auth Hook מסוג Before User Created, ‏`admin_users`, ‏`requireAdmin()` ומדיניות ה-RLS נשארים בלי שינוי, כשכבות הגנה נוספות. ‏`/auth/callback` הוסר.
+**השלכות:** ההתחברות לא תלויה בשליחת מיילים, ולכן אין צורך ב-SMTP של Resend ב-Supabase. אין מסך "שכחתי סיסמה": איפוס נעשה ב-Dashboard (מחיקה ויצירה מחדש של המשתמש, או שינוי סיסמה). Supabase מגביל מראש ניסיונות כניסה כושלים. בכל סביבה צריך ליצור את חשבון הסוכן בנפרד (סעיף 2.10).

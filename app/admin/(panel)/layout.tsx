@@ -1,7 +1,8 @@
 import { AdminHeader } from "@/components/layout/admin-header";
 import { AdminSidebar } from "@/components/layout/admin-sidebar";
 
-// Admin shell: header + side menu. Not protected yet — auth arrives in Milestone 2.
+// Admin shell: header + side menu. Access is checked by requireAdmin() in the header
+// and again in every page and action (ARCHITECTURE §2.7).
 export default function AdminPanelLayout({ children }: { children: React.ReactNode }) {
   return (
     <>

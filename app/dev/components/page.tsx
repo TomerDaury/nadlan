@@ -13,7 +13,7 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { TintBox } from "@/components/ui/tint-box";
 import { formatPrice, formatRoomsRange } from "@/lib/format";
-import { CheckboxDemo, ChipsDemo, RadioDemo } from "./interactive-demos";
+import { AlertDialogDemo, CheckboxDemo, ChipsDemo, RadioDemo } from "./interactive-demos";
 
 export const metadata: Metadata = {
   title: "דף רכיבים (פנימי)",
@@ -213,6 +213,8 @@ export default function ComponentsPage() {
           <Section title="Checkbox ו-Radio">
             <CheckboxDemo />
             <RadioDemo />
+            <SubTitle>חלון אישור (לפני מחיקה)</SubTitle>
+            <AlertDialogDemo />
           </Section>
         </div>
 

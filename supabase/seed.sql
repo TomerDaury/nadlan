@@ -1,0 +1,40 @@
+-- Sample properties for the Development project ONLY. Never run on Production.
+-- Images are not seeded; the UI shows a placeholder.
+
+insert into public.properties
+  (title, city, neighborhood, address, price, rooms, area_sqm, floor,
+   has_parking, has_elevator, has_balcony, has_safe_room, has_storage,
+   condition, description, expected_rent, estimated_yield, status, created_at)
+values
+  ('דירת 4 חדרים עם מרפסת', 'תל אביב', 'הצפון הישן', 'רחוב דיזנגוף 210', 1950000, 4, 95, 3,
+   true, true, true, true, false, 'renovated',
+   'דירה מוארת ומשופצת ברחוב שקט, עם מרפסת שמש הפונה לפארק. במרחק הליכה מגני ילדים, בית ספר ותחבורה ציבורית.',
+   6500, 4.0, 'available', now() - interval '1 day'),
+  ('דירת גן שקטה', 'תל אביב', 'נווה צדק', 'רחוב שבזי 15', 1820000, 3.5, 88, 0,
+   false, false, false, true, true, 'new',
+   'דירת גן עם חצר פרטית קטנה, ברחוב צדדי ושקט. קרוב לפארק ולגינה ציבורית.',
+   null, null, 'unavailable', now() - interval '2 days'),
+  ('פנטהאוז קטן', 'תל אביב', 'הצפון הישן', 'רחוב ארלוזורוב 40', 1990000, 4, 100, 6,
+   true, true, true, true, true, 'renovated',
+   'פנטהאוז עם מרפסת גג ונוף פתוח לים. בניין עם מעלית וחניה בטאבו.',
+   7200, 4.3, 'available', now() - interval '3 days'),
+  ('דירת 3.5 חדרים משופצת', 'רמת גן', 'מרום נווה', 'רחוב ההגנה 8', 1700000, 3.5, 82, 2,
+   true, true, true, false, false, 'renovated',
+   'דירה משופצת קומפלט, קרובה לגנים ולבתי ספר, ליד הפארק הלאומי.',
+   5200, 3.7, 'available', now() - interval '4 days'),
+  ('דירה להשקעה', 'רמת גן', 'הבורסה', 'רחוב ז''בוטינסקי 100', 1250000, 3, 65, 4,
+   false, true, false, false, false, 'needs_renovation',
+   'דירה ותיקה עם פוטנציאל השבחה, קרובה לרכבת הקלה ולמגדלי הבורסה. מושכרת כיום.',
+   4800, 4.6, 'available', now() - interval '5 days'),
+  ('דירת 5 חדרים', 'רמת גן', 'מרום נווה', 'רחוב הרואה 22', 2400000, 5, 125, 5,
+   true, true, true, true, true, 'new',
+   'דירה חדשה מקבלן, מרווחת, עם ממ"ד ושתי חניות. שכונה שקטה ומשפחתית.',
+   null, null, 'available', now() - interval '6 days'),
+  ('דירת 2 חדרים', 'גבעתיים', 'בורוכוב', 'רחוב כצנלסון 50', 1100000, 2, 50, 1,
+   false, false, true, false, false, 'renovated',
+   'דירה קטנה ומשופצת במרכז העיר, קרובה לבתי קפה ולתחבורה ציבורית.',
+   4300, 4.7, 'unavailable', now() - interval '7 days'),
+  ('קוטג'' עם חצר', 'גבעתיים', 'גבעת רמב"ם', 'רחוב השלום 3', 3100000, 6, 180, 0,
+   true, false, false, true, true, 'renovated',
+   'קוטג'' דו-קומתי עם חצר גדולה, ברחוב ללא מוצא. קרוב לגני ילדים ולבית ספר יסודי.',
+   null, null, 'available', now() - interval '8 days');
