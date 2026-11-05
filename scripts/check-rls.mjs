@@ -99,6 +99,37 @@ await check("anon cannot update client_requests", async () => {
     .select("id");
   return Boolean(error) || (data ?? []).length === 0;
 });
+await check("anon cannot delete client_requests", async () => {
+  const { data, error } = await supabase
+    .from("client_requests")
+    .delete()
+    .neq("id", "00000000-0000-0000-0000-000000000000")
+    .select("id");
+  return Boolean(error) || (data ?? []).length === 0;
+});
+// Milestone 4: the agent got read-only policies on these; anon must still get nothing.
+await check("anon cannot insert into request_matches", async () => {
+  const { error } = await supabase
+    .from("request_matches")
+    .insert({ request_id: "00000000-0000-0000-0000-000000000000", source: "initial", rank: 1 });
+  return Boolean(error);
+});
+await check("anon cannot update request_matches", async () => {
+  const { data, error } = await supabase
+    .from("request_matches")
+    .update({ reason: "hacked" })
+    .neq("id", "00000000-0000-0000-0000-000000000000")
+    .select("id");
+  return Boolean(error) || (data ?? []).length === 0;
+});
+await check("anon cannot delete request_matches", async () => {
+  const { data, error } = await supabase
+    .from("request_matches")
+    .delete()
+    .neq("id", "00000000-0000-0000-0000-000000000000")
+    .select("id");
+  return Boolean(error) || (data ?? []).length === 0;
+});
 
 for (const r of results) console.log(`${r.ok ? "PASS" : "FAIL"}  ${r.name}${r.note ? ` (${r.note})` : ""}`);
 const failed = results.filter((r) => !r.ok).length;
