@@ -1,5 +1,26 @@
 import { describe, expect, it } from "vitest";
-import { formatPrice, formatRoomsRange } from "./format";
+import { formatArea, formatDate, formatPrice, formatRoomsRange } from "./format";
+
+describe("formatDate", () => {
+  it("formats as DD/MM/YYYY", () => {
+    expect(formatDate("2026-11-04T10:00:00Z")).toBe("04/11/2026");
+  });
+
+  it("uses Israel time, not UTC", () => {
+    // 23:30 UTC on Nov 3 is already Nov 4 in Israel (UTC+2).
+    expect(formatDate("2026-11-03T23:30:00Z")).toBe("04/11/2026");
+  });
+});
+
+describe("formatArea", () => {
+  it("shows the city and one neighborhood", () => {
+    expect(formatArea("חיפה", ["כרמל"])).toBe("חיפה • כרמל");
+  });
+
+  it("joins several neighborhoods with commas", () => {
+    expect(formatArea("תל אביב", ["הצפון הישן", "נווה צדק"])).toBe("תל אביב • הצפון הישן, נווה צדק");
+  });
+});
 
 describe("formatPrice", () => {
   it("puts the shekel sign first with a space and thousands separators", () => {
