@@ -11,6 +11,7 @@ import { formatArea, formatDate, formatPrice, formatRoomsRange } from "@/lib/for
 import { requireAdmin } from "@/lib/services/admin";
 import { getRequestDetails, type RequestDetails } from "@/lib/services/admin-requests";
 import { UpdatesBadge } from "@/app/admin/(panel)/requests/updates-badge";
+import { DeleteRequestButton } from "@/app/admin/(panel)/requests/delete-request-button";
 
 export const metadata: Metadata = { title: "פרטי פנייה | ממשק ניהול" };
 
@@ -92,7 +93,10 @@ async function RequestDetailsView({ params }: { params: PageProps<"/admin/reques
 
   return (
     <>
-      <h1 className="mb-6 text-h2 font-medium">פנייה של {request.name}</h1>
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-h2 font-medium">פנייה של {request.name}</h1>
+        <DeleteRequestButton id={request.id} name={request.name} variant="button" />
+      </div>
 
       <div className="mb-6 grid gap-4 lg:grid-cols-2">
         <InfoPanel title="פרטי הלקוח" icon="user">
@@ -144,7 +148,7 @@ function DetailsSkeleton() {
   );
 }
 
-// DESIGN.md §1.10 — request details (read-only, PRD F9). No edit actions on this screen.
+// DESIGN.md §1.10 — request details (PRD F9). No edit actions; the only action is deleting the request.
 export default function AdminRequestDetailsPage({ params }: PageProps<"/admin/requests/[id]">) {
   return (
     <>
