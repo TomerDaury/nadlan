@@ -42,6 +42,17 @@ export async function listRequests(): Promise<RequestListItem[]> {
   return (data ?? []).map((row) => withNumbers(row) as RequestListItem);
 }
 
+/**
+ * Permanently deletes a request (PRD F9). Its matches and queued emails go with it
+ * (ON DELETE CASCADE). Returns how many rows were deleted (0 = already gone).
+ */
+export async function deleteRequest(id: string): Promise<number> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("client_requests").delete().eq("id", id).select("id");
+  if (error) throw new Error(`deleteRequest: ${error.message}`);
+  return data?.length ?? 0;
+}
+
 /** One request with the properties shown to the client. Unknown or malformed id → null. */
 export async function getRequestDetails(id: string): Promise<RequestDetails | null> {
   if (!z.uuid().safeParse(id).success) return null;
