@@ -8,6 +8,7 @@ import {
   Heart,
   Image as ImageIcon,
   List,
+  LoaderCircle,
   LogOut,
   Mail,
   MapPin,
@@ -50,6 +51,7 @@ export const icons = {
   back: ChevronRight,
   message: MessageSquare,
   list: List,
+  spinner: LoaderCircle,
 } satisfies Record<string, LucideIcon>;
 
 export type IconName = keyof typeof icons;

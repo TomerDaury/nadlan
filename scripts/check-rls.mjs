@@ -1,5 +1,5 @@
-// RLS check (Milestone 2 DoD): without signing in, the browser key must not be able
-// to read or change agent data. Runs against the Development project from .env.
+// RLS check (Milestones 2–3 DoD): without signing in, the browser key must not be able
+// to read or change agent or client data. Runs against the Development project from .env.
 // Usage: npm run check:rls
 import { createClient } from "@supabase/supabase-js";
 
@@ -66,6 +66,38 @@ await check("anon cannot upload to property-images", async () => {
       contentType: "image/png",
     });
   return Boolean(error);
+});
+
+// Client tables (Milestone 3): server-only, so the browser key gets nothing at all.
+for (const table of ["client_requests", "request_matches", "submission_log"]) {
+  await check(`anon cannot read ${table}`, async () => noRows(await supabase.from(table).select("id")));
+}
+await check("anon cannot insert a client request", async () => {
+  const { error } = await supabase.from("client_requests").insert({
+    submission_id: crypto.randomUUID(),
+    name: "rls-test",
+    email: "rls@test.local",
+    city: "x",
+    neighborhoods: ["x"],
+    max_budget: 1,
+    rooms_min: 1,
+    rooms_max: 1,
+    preferences_text: "x",
+    access_token_hash: `rls-test-${Date.now()}`,
+  });
+  return Boolean(error);
+});
+await check("anon cannot insert into submission_log", async () => {
+  const { error } = await supabase.from("submission_log").insert({ ip_hash: "rls-test" });
+  return Boolean(error);
+});
+await check("anon cannot update client_requests", async () => {
+  const { data, error } = await supabase
+    .from("client_requests")
+    .update({ notifications_active: false })
+    .neq("id", "00000000-0000-0000-0000-000000000000")
+    .select("id");
+  return Boolean(error) || (data ?? []).length === 0;
 });
 
 for (const r of results) console.log(`${r.ok ? "PASS" : "FAIL"}  ${r.name}${r.note ? ` (${r.note})` : ""}`);
