@@ -1,10 +1,9 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/integrations/supabase/server";
 
-export type LoginState = { error?: string; email?: string };
+export type LoginState = { error?: string; email?: string; signedIn?: boolean };
 
 const credentialsSchema = z.object({
   email: z.email({ error: "יש להזין כתובת מייל תקינה" }),
@@ -39,5 +38,8 @@ export async function signIn(_prev: LoginState, formData: FormData): Promise<Log
     return { error: "אין לך הרשאת גישה לממשק הניהול", email };
   }
 
-  redirect("/admin/properties");
+  // No server redirect here: the page rendered in the same response did not always see the
+  // new session cookies, so the agent landed back on the login form. The form does a full
+  // page load instead, which always sends the fresh cookies.
+  return { signedIn: true };
 }

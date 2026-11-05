@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,12 @@ const initialState: LoginState = {};
 
 export function LoginForm() {
   const [state, action, pending] = useActionState(signIn, initialState);
+  const signedIn = state.signedIn === true;
+
+  // Full page load (not a client-side transition), so the new session cookies are always sent.
+  useEffect(() => {
+    if (signedIn) window.location.replace("/admin/properties");
+  }, [signedIn]);
 
   return (
     <form action={action} className="flex flex-col gap-4 text-start">
@@ -37,8 +43,8 @@ export function LoginForm() {
         {(control) => <Input {...control} name="password" type="password" dir="ltr" autoComplete="current-password" />}
       </Field>
 
-      <Button type="submit" className="mt-2 w-full" disabled={pending}>
-        {pending ? "מתחבר..." : "כניסה"}
+      <Button type="submit" className="mt-2 w-full" disabled={pending || signedIn}>
+        {pending || signedIn ? "מתחבר..." : "כניסה"}
       </Button>
     </form>
   );
