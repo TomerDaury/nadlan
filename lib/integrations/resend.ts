@@ -19,7 +19,29 @@ function resend(): Resend {
  * (ARCHITECTURE §2.9), so test emails never reach real clients.
  * Throws with Resend's message when sending fails.
  */
-export async function sendEmail({ to, subject, react }: { to: string; subject: string; react: ReactElement }) {
+export async function sendEmail(email: EmailMessage) {
+  const { data, error } = await resend().emails.send(await prepare(email));
+  if (error) throw new Error(`Resend: ${error.message}`);
+  return data.id;
+}
+
+/** At most this many emails in one Resend batch call (ARCHITECTURE §2.5). */
+export const MAX_BATCH = 100;
+
+/**
+ * Sends up to 100 emails in one call (Resend batch.send). The batch is all-or-nothing:
+ * when it throws, none of the emails was sent.
+ */
+export async function sendEmailBatch(emails: EmailMessage[]) {
+  if (!emails.length) return;
+  if (emails.length > MAX_BATCH) throw new Error(`sendEmailBatch: at most ${MAX_BATCH} emails per batch`);
+  const { error } = await resend().batch.send(await Promise.all(emails.map(prepare)));
+  if (error) throw new Error(`Resend: ${error.message}`);
+}
+
+export type EmailMessage = { to: string; subject: string; react: ReactElement };
+
+async function prepare({ to, subject, react }: EmailMessage) {
   const from = process.env.EMAIL_FROM;
   if (!from) throw new Error("EMAIL_FROM is not set");
   const recipient = process.env.EMAIL_TEST_RECIPIENT || to;
@@ -27,7 +49,5 @@ export async function sendEmail({ to, subject, react }: { to: string; subject: s
   // Rendered here rather than with Resend's `react` option: Resend loads the renderer with a
   // dynamic import that the Next.js bundler cannot resolve.
   const [html, text] = await Promise.all([render(react), render(react, { plainText: true })]);
-  const { data, error } = await resend().emails.send({ from, to: recipient, subject, html, text });
-  if (error) throw new Error(`Resend: ${error.message}`);
-  return data.id;
+  return { from, to: recipient, subject, html, text };
 }

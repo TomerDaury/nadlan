@@ -4,12 +4,20 @@ import { Bell, CheckCircle2 } from "lucide-react";
 import { Icon } from "@/components/icons";
 import { InvalidLink } from "@/components/property/invalid-link";
 import { PropertyCard } from "@/components/property/property-card";
+import { NotificationRow } from "@/components/property/notification-row";
 import { PropertyMiniCard } from "@/components/property/property-mini-card";
 import { Button } from "@/components/ui/button";
 import { Notice } from "@/components/ui/notice";
 import { Panel } from "@/components/ui/panel";
 import { formatArea, formatPrice, formatRoomsRange } from "@/lib/format";
-import { getCurrentMatches, getRequestByToken, type ClientRequest, type MatchCard } from "@/lib/services/requests";
+import {
+  getCurrentMatches,
+  getNotificationMatches,
+  getRequestByToken,
+  type ClientRequest,
+  type MatchCard,
+  type NotificationMatch,
+} from "@/lib/services/requests";
 import { NotificationsPanel } from "@/app/(public)/r/[token]/notifications-panel";
 
 type Props = PageProps<"/r/[token]">;
@@ -90,11 +98,13 @@ function PersonalPage({
   token,
   request,
   matches,
+  sent,
   done,
 }: {
   token: string;
   request: ClientRequest;
   matches: MatchCard[];
+  sent: NotificationMatch[];
   done?: string;
 }) {
   return (
@@ -141,25 +151,43 @@ function PersonalPage({
           <NotificationsPanel token={token} active={request.notifications_active} />
         </div>
 
-        {/* Left (RTL end): the properties shown for the current criteria. */}
-        <section aria-labelledby="shown-heading">
-          <h2 id="shown-heading" className="mb-4 text-h3 font-medium text-ink">
-            הנכסים שהוצגו לי
-          </h2>
-          {matches.length ? (
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              {matches.map((match) => (
-                <PropertyMiniCard key={match.property.id} match={match} href={`/r/${token}/properties/${match.property.id}`} />
-              ))}
-            </div>
-          ) : (
-            <Panel className="px-6 py-10 text-center">
-              <p className="text-body text-slate-text">
-                לא נמצאו כרגע נכסים מתאימים. נעדכן אתכם במייל כשייכנס נכס שמתאים לכם.
-              </p>
-            </Panel>
+        {/* Left (RTL end): the properties shown for the current criteria, then the updates. */}
+        <div className="flex min-w-0 flex-col gap-8">
+          <section aria-labelledby="shown-heading">
+            <h2 id="shown-heading" className="mb-4 text-h3 font-medium text-ink">
+              הנכסים שהוצגו לי
+            </h2>
+            {matches.length ? (
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                {matches.map((match) => (
+                  <PropertyMiniCard key={match.property.id} match={match} href={`/r/${token}/properties/${match.property.id}`} />
+                ))}
+              </div>
+            ) : (
+              <Panel className="px-6 py-10 text-center">
+                <p className="text-body text-slate-text">
+                  לא נמצאו כרגע נכסים מתאימים. נעדכן אתכם במייל כשייכנס נכס שמתאים לכם.
+                </p>
+              </Panel>
+            )}
+          </section>
+
+          {/* Properties sent in automatic updates (PRD F6). Hidden until the first one is sent. */}
+          {sent.length > 0 && (
+            <section aria-labelledby="sent-heading">
+              <h2 id="sent-heading" className="mb-4 text-h3 font-medium text-ink">
+                נכסים חדשים שנשלחו אליי
+              </h2>
+              <Panel className="p-5">
+                <ul>
+                  {sent.map((match) => (
+                    <NotificationRow key={match.property.id} match={match} href={`/r/${token}/properties/${match.property.id}`} />
+                  ))}
+                </ul>
+              </Panel>
+            </section>
           )}
-        </section>
+        </div>
       </div>
     </>
   );
@@ -174,7 +202,8 @@ async function PersonalLinkContent({ params, searchParams }: Props) {
   if (query.view === "results") return <ResultsView token={token} matches={matches} />;
 
   const done = typeof query.done === "string" ? query.done : undefined;
-  return <PersonalPage token={token} request={request} matches={matches} done={done} />;
+  const sent = await getNotificationMatches(request.id);
+  return <PersonalPage token={token} request={request} matches={matches} sent={sent} done={done} />;
 }
 
 function PageSkeleton() {

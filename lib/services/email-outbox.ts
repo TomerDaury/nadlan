@@ -47,3 +47,13 @@ export async function enqueueEmail(
   if (error) throw new Error(`enqueueEmail: ${error.message}`);
   return data.id as string;
 }
+
+/** New property emails are sent in batches of at most this many (ARCHITECTURE §2.6 B). */
+export const BATCH_SIZE = 100;
+
+/** Splits a list into consecutive parts of at most `size` items. */
+export function chunk<T>(items: T[], size: number): T[][] {
+  const parts: T[][] = [];
+  for (let i = 0; i < items.length; i += size) parts.push(items.slice(i, i + size));
+  return parts;
+}

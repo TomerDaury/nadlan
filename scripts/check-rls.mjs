@@ -59,6 +59,14 @@ await check("anon cannot call is_admin()", async () => {
   const { data, error } = await supabase.rpc("is_admin");
   return Boolean(error) || data === false;
 });
+// Milestone 6: the new property notifications function is server-only (service_role).
+await check("anon cannot call record_property_notifications()", async () => {
+  const { error } = await supabase.rpc("record_property_notifications", {
+    p_property_id: "00000000-0000-0000-0000-000000000000",
+    p_request_ids: [],
+  });
+  return Boolean(error);
+});
 await check("anon cannot upload to property-images", async () => {
   const { error } = await supabase.storage
     .from("property-images")

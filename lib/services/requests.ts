@@ -224,7 +224,34 @@ export async function getCurrentMatches(requestId: string): Promise<MatchCard[]>
   });
 }
 
-export type MatchedProperty = PropertyInput & { id: string; images: PropertyImage[] };
+export type NotificationMatch = {
+  sentAt: string;
+  property: Pick<PropertyRow, "id" | "title" | "neighborhood" | "price" | "status"> & { primaryImage: string | null };
+};
+
+/**
+ * Properties sent to this request in automatic updates (PRD F6, DESIGN §1.4), newest first.
+ * Kept after a criteria update (not tied to is_current). Deleted properties are not shown.
+ */
+export async function getNotificationMatches(requestId: string): Promise<NotificationMatch[]> {
+  const supabase = await createServiceClient();
+  const { data, error } = await supabase
+    .from("request_matches")
+    .select("created_at, property:properties(id, title, neighborhood, price, status, images:property_images(storage_path, is_primary, sort_order))")
+    .eq("request_id", requestId)
+    .eq("source", "notification")
+    .order("created_at", { ascending: false });
+  if (error) throw new Error(`getNotificationMatches: ${error.message}`);
+
+  return (data ?? []).flatMap((row) => {
+    const property = row.property as unknown as (NotificationMatch["property"] & { images: PropertyImage[] }) | null;
+    if (!property) return [];
+    const { images, ...rest } = property;
+    return [{ sentAt: row.created_at as string, property: { ...rest, primaryImage: primaryImagePath(images) } }];
+  });
+}
+
+export type MatchedProperty =PropertyInput & { id: string; images: PropertyImage[] };
 
 /** A property's full details, only if it was matched to this request. */
 export async function getMatchedProperty(requestId: string, propertyId: string): Promise<MatchedProperty | null> {
