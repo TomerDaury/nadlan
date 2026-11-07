@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isRetryable, MAX_ATTEMPTS, PENDING_GRACE_MS } from "@/lib/services/email-outbox";
+import { BATCH_SIZE, chunk, isRetryable, MAX_ATTEMPTS, PENDING_GRACE_MS } from "@/lib/services/email-outbox";
 
 describe("isRetryable (Cron retries, ARCHITECTURE §2.6 C)", () => {
   const now = Date.parse("2026-11-06T12:00:00Z");
@@ -22,5 +22,18 @@ describe("isRetryable (Cron retries, ARCHITECTURE §2.6 C)", () => {
 
   it("never sends a sent email again", () => {
     expect(isRetryable({ status: "sent", attempts: 1, created_at: old }, now)).toBe(false);
+  });
+});
+
+describe("chunk (batches of new property emails)", () => {
+  it("splits into parts of at most the batch size, in order", () => {
+    const ids = Array.from({ length: 205 }, (_, i) => `id${i}`);
+    const parts = chunk(ids, BATCH_SIZE);
+    expect(parts.map((p) => p.length)).toEqual([100, 100, 5]);
+    expect(parts.flat()).toEqual(ids);
+  });
+
+  it("returns no parts for an empty list", () => {
+    expect(chunk([], BATCH_SIZE)).toEqual([]);
   });
 });

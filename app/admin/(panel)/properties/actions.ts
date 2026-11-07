@@ -1,8 +1,10 @@
 "use server";
 
+import { after } from "next/server";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/services/admin";
+import { notifyNewProperty } from "@/lib/services/notify-new-property";
 import * as properties from "@/lib/services/properties";
 import { parseImageList } from "@/lib/validation/images";
 import { parseProperty, propertyFormValues, type PropertyFieldErrors } from "@/lib/validation/property";
@@ -54,6 +56,9 @@ export async function createPropertyAction(
     console.error(error);
     return { formError: SAVE_FAILED };
   }
+  // A new available property updates matching clients by email, in the background (PRD F6).
+  // Editing a property never does (updatePropertyAction), not even a change to "available".
+  if (parsed.fields.status === "available") after(() => notifyNewProperty(id.data));
   redirect("/admin/properties?done=created");
 }
 
