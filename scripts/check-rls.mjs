@@ -69,7 +69,7 @@ await check("anon cannot upload to property-images", async () => {
 });
 
 // Client tables (Milestone 3): server-only, so the browser key gets nothing at all.
-for (const table of ["client_requests", "request_matches", "submission_log"]) {
+for (const table of ["client_requests", "request_matches", "submission_log", "email_outbox"]) {
   await check(`anon cannot read ${table}`, async () => noRows(await supabase.from(table).select("id")));
 }
 await check("anon cannot insert a client request", async () => {
@@ -126,6 +126,22 @@ await check("anon cannot delete request_matches", async () => {
   const { data, error } = await supabase
     .from("request_matches")
     .delete()
+    .neq("id", "00000000-0000-0000-0000-000000000000")
+    .select("id");
+  return Boolean(error) || (data ?? []).length === 0;
+});
+
+// Milestone 5: the email outbox is server-only too.
+await check("anon cannot insert into email_outbox", async () => {
+  const { error } = await supabase
+    .from("email_outbox")
+    .insert({ request_id: "00000000-0000-0000-0000-000000000000", kind: "results" });
+  return Boolean(error);
+});
+await check("anon cannot update email_outbox", async () => {
+  const { data, error } = await supabase
+    .from("email_outbox")
+    .update({ status: "sent" })
     .neq("id", "00000000-0000-0000-0000-000000000000")
     .select("id");
   return Boolean(error) || (data ?? []).length === 0;

@@ -2,19 +2,15 @@
 
 import { startTransition, useActionState, useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/icons";
+import { AreaFields, BudgetRoomsFields, PreferencesField } from "@/components/request/criteria-fields";
 import { Button } from "@/components/ui/button";
-import { ChipGroup } from "@/components/ui/chip";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Panel } from "@/components/ui/panel";
-import { Select } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import type { Area } from "@/lib/services/areas";
 import {
   parseRequest,
   requestFormValues,
-  ROOM_OPTIONS,
   type RequestFieldErrors,
 } from "@/lib/validation/request";
 import { submitRequestAction, type RequestFormState } from "@/app/(public)/actions";
@@ -56,7 +52,6 @@ export function RequestForm({ areas, submissionId }: RequestFormProps) {
   const formError = clientErrors ? "יש לתקן את השדות המסומנים" : state.formError;
   // A duplicate answer means the first submission is still on its way to the results page.
   const busy = pending || Boolean(state.duplicate);
-  const cityNeighborhoods = areas.find((a) => a.city === city)?.neighborhoods ?? [];
 
   function markEdited(...fields: string[]) {
     setEdited((prev) => new Set([...prev, ...fields]));
@@ -123,109 +118,26 @@ export function RequestForm({ areas, submissionId }: RequestFormProps) {
           {/* Left (RTL end): what they are looking for */}
           <div className="flex flex-col gap-4 md:ps-8">
             <SectionTitle icon="search">מה אתם מחפשים</SectionTitle>
-            <Field id="city" label="עיר" required error={errors.city}>
-              {(p) => (
-                <Select
-                  {...p}
-                  name="city"
-                  placeholder="בחרו עיר"
-                  value={city}
-                  onChange={(e) => {
-                    setCity(e.target.value);
-                    setNeighborhoods([]);
-                    markEdited("neighborhoods");
-                  }}
-                >
-                  {areas.map((a) => (
-                    <option key={a.city} value={a.city}>
-                      {a.city}
-                    </option>
-                  ))}
-                </Select>
-              )}
-            </Field>
-
-            <div className="flex flex-col gap-1.5">
-              <p id="neighborhoods-label" className="flex items-center gap-1 text-small font-medium text-ink">
-                שכונות
-                <span aria-hidden className="text-brand-500">
-                  *
-                </span>
-              </p>
-              {city ? (
-                <ChipGroup
-                  label="שכונות"
-                  options={cityNeighborhoods}
-                  value={neighborhoods}
-                  onChange={(value) => {
-                    setNeighborhoods(value);
-                    markEdited("neighborhoods");
-                  }}
-                />
-              ) : (
-                <p className="text-small text-muted-text">בחרו קודם עיר</p>
-              )}
-              {errors.neighborhoods && <p className="text-caption text-error">{errors.neighborhoods}</p>}
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 lg:grid-cols-[1fr_1.2fr]">
-              <Field id="max_budget" label="תקציב מקסימלי (₪)" required error={errors.max_budget} className="col-span-2 lg:col-span-1">
-                {(p) => (
-                  <Input {...p} name="max_budget" type="number" inputMode="numeric" min={1} step={1} dir="ltr" className="text-end" placeholder="2,000,000" />
-                )}
-              </Field>
-              <fieldset className="col-span-2 flex flex-col gap-1.5 lg:col-span-1">
-                <legend className="mb-1.5 flex items-center gap-1 text-small font-medium text-ink">
-                  מספר חדרים
-                  <span aria-hidden className="text-brand-500">
-                    *
-                  </span>
-                </legend>
-                <div className="grid grid-cols-2 gap-2">
-                  <Label htmlFor="rooms_min" className="sr-only">
-                    מספר חדרים מינימלי
-                  </Label>
-                  <Select
-                    id="rooms_min"
-                    name="rooms_min"
-                    placeholder="מ-"
-                    aria-invalid={errors.rooms_min ? true : undefined}
-                  >
-                    {ROOM_OPTIONS.map((n) => (
-                      <option key={n} value={n}>
-                        {n}
-                      </option>
-                    ))}
-                  </Select>
-                  <Label htmlFor="rooms_max" className="sr-only">
-                    מספר חדרים מקסימלי
-                  </Label>
-                  <Select
-                    id="rooms_max"
-                    name="rooms_max"
-                    placeholder="עד"
-                    aria-invalid={errors.rooms_max ? true : undefined}
-                  >
-                    {ROOM_OPTIONS.map((n) => (
-                      <option key={n} value={n}>
-                        {n}
-                      </option>
-                    ))}
-                  </Select>
-                </div>
-                {(errors.rooms_min || errors.rooms_max) && (
-                  <p className="text-caption text-error">{errors.rooms_min ?? errors.rooms_max}</p>
-                )}
-              </fieldset>
-            </div>
+            <AreaFields
+              areas={areas}
+              city={city}
+              neighborhoods={neighborhoods}
+              errors={errors}
+              onCityChange={(value) => {
+                setCity(value);
+                setNeighborhoods([]);
+                markEdited("neighborhoods");
+              }}
+              onNeighborhoodsChange={(value) => {
+                setNeighborhoods(value);
+                markEdited("neighborhoods");
+              }}
+            />
+            <BudgetRoomsFields errors={errors} />
           </div>
         </div>
 
-        <Field id="preferences_text" label="מה הכי חשוב לכם בנכס?" required error={errors.preferences_text} className="mt-6">
-          {(p) => (
-            <Textarea {...p} name="preferences_text" rows={3} maxLength={1000} placeholder="למשל: שקט, קרוב לגנים, עם מרפסת..." />
-          )}
-        </Field>
+        <PreferencesField errors={errors} className="mt-6" />
 
         {formError && (
           <p role="alert" className="mt-5 rounded-input bg-error/10 px-4 py-2.5 text-center text-small text-error">

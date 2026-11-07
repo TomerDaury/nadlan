@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isInAreas, parseRequest, requestFormValues } from "@/lib/validation/request";
+import { isInAreas, parseCriteria, parseRequest, requestFormValues } from "@/lib/validation/request";
 
 const valid = {
   submission_id: "3f1c2a8e-7b4d-4c1e-9a2f-6d5e8b7c9a10",
@@ -107,5 +107,40 @@ describe("isInAreas", () => {
   it("rejects an unknown city or a neighborhood from another city", () => {
     expect(isInAreas({ city: "חיפה", neighborhoods: ["נווה צדק"] }, areas)).toBe(false);
     expect(isInAreas({ city: "תל אביב", neighborhoods: ["הדר"] }, areas)).toBe(false);
+  });
+});
+
+describe("parseCriteria (updating criteria, PRD F5)", () => {
+  const criteria = {
+    city: "תל אביב",
+    neighborhoods: ["הצפון הישן"],
+    max_budget: "2500000",
+    rooms_min: "3",
+    rooms_max: "4",
+    preferences_text: "שקט",
+  };
+
+  it("accepts the criteria without any personal details", () => {
+    const result = parseCriteria(criteria);
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data).not.toHaveProperty("email");
+  });
+
+  it("blocks a zero budget and a reversed rooms range", () => {
+    const result = parseCriteria({ ...criteria, max_budget: "0", rooms_min: "5", rooms_max: "3" });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.fieldErrors.max_budget).toBeDefined();
+      expect(result.fieldErrors.rooms_max).toBe("מספר החדרים המינימלי גדול מהמקסימלי");
+    }
+  });
+
+  it("requires at least one neighborhood and the free text", () => {
+    const result = parseCriteria({ ...criteria, neighborhoods: [], preferences_text: " " });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.fieldErrors.neighborhoods).toBeDefined();
+      expect(result.fieldErrors.preferences_text).toBeDefined();
+    }
   });
 });

@@ -1,13 +1,16 @@
 import "server-only";
+import { randomUUID } from "node:crypto";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createServiceClient } from "@/lib/integrations/supabase/service";
+import { enqueueEmail } from "@/lib/services/email-outbox";
 import { findCandidates, rankCandidates } from "@/lib/services/matching";
-import { createToken, isValidTokenFormat, sha256 } from "@/lib/services/tokens";
+import { deriveToken, isValidTokenFormat, sha256 } from "@/lib/services/tokens";
 import type { PropertyImage } from "@/lib/services/properties";
 import type { PropertyInput } from "@/lib/validation/property";
-import type { RequestInput } from "@/lib/validation/request";
+import type { CriteriaInput, RequestInput } from "@/lib/validation/request";
 
-// Client requests (PRD F1, F3, F4 – saving only). All access uses the secret key on the
-// server; client data is returned only after the link token has been checked.
+// Client requests (PRD F1, F3–F5). All access uses the secret key on the server;
+// client data is returned only after the link token has been checked (ADR-11).
 
 /** At most this many submissions per IP per hour (ARCHITECTURE §2.7, assumption). */
 export const RATE_LIMIT_PER_HOUR = 5;
@@ -15,7 +18,44 @@ export const RATE_LIMIT_PER_HOUR = 5;
 /** Postgres unique_violation. */
 const UNIQUE_VIOLATION = "23505";
 
-export type SubmitResult = { status: "created"; token: string } | { status: "duplicate" } | { status: "rate_limited" };
+export type SubmitResult =
+  | { status: "created"; token: string; outboxId: string | null }
+  | { status: "duplicate" }
+  | { status: "rate_limited" };
+
+/**
+ * Computes up to 3 matches for the criteria and saves them as the current initial matches.
+ * A matching failure is logged and leaves the request with no results (it is saved in any case).
+ */
+async function saveInitialMatches(supabase: SupabaseClient, requestId: string, criteria: CriteriaInput) {
+  try {
+    const matches = rankCandidates(await findCandidates(supabase, criteria));
+    if (!matches.length) return;
+    const { error } = await supabase.from("request_matches").insert(
+      matches.map((m) => ({
+        request_id: requestId,
+        property_id: m.property_id,
+        property_title_snapshot: m.title,
+        source: "initial",
+        rank: m.rank,
+        reason: m.reason,
+      }))
+    );
+    if (error) throw new Error(error.message);
+  } catch (error) {
+    console.error("saveInitialMatches: matching failed", error);
+  }
+}
+
+/** Queues the results email. A queue failure must not fail the request (PRD: the request is kept). */
+async function queueResultsEmail(supabase: SupabaseClient, requestId: string): Promise<string | null> {
+  try {
+    return await enqueueEmail(supabase, requestId, "results");
+  } catch (error) {
+    console.error("queueResultsEmail failed", error);
+    return null;
+  }
+}
 
 /**
  * Saves a request and its initial matches (ARCHITECTURE §2.6 A).
@@ -46,10 +86,13 @@ export async function submitRequest(input: RequestInput, ip: string): Promise<Su
   const { error: logError } = await supabase.from("submission_log").insert({ ip_hash: ipHash });
   if (logError) throw new Error(`submitRequest: ${logError.message}`);
 
-  const token = createToken();
-  const { data: request, error: insertError } = await supabase
+  // The id is chosen here so the link token can be derived from it (ADR-15).
+  const requestId = randomUUID();
+  const token = deriveToken(requestId);
+  const { error: insertError } = await supabase
     .from("client_requests")
     .insert({
+      id: requestId,
       submission_id: input.submission_id,
       name: input.name,
       email: input.email,
@@ -61,37 +104,27 @@ export async function submitRequest(input: RequestInput, ip: string): Promise<Su
       rooms_max: input.rooms_max,
       preferences_text: input.preferences_text,
       access_token_hash: sha256(token),
-    })
-    .select("id")
-    .single();
+    });
   // Two submissions with the same id at the same moment: the other one won.
   if (insertError?.code === UNIQUE_VIOLATION) return { status: "duplicate" };
   if (insertError) throw new Error(`submitRequest: ${insertError.message}`);
 
-  try {
-    const matches = rankCandidates(await findCandidates(supabase, input));
-    if (matches.length) {
-      const { error } = await supabase.from("request_matches").insert(
-        matches.map((m) => ({
-          request_id: request.id,
-          property_id: m.property_id,
-          property_title_snapshot: m.title,
-          source: "initial",
-          rank: m.rank,
-          reason: m.reason,
-        }))
-      );
-      if (error) throw new Error(error.message);
-    }
-  } catch (error) {
-    // The request is already saved (PRD: it is kept in any case). Show it with no results.
-    console.error("submitRequest: matching failed", error);
-  }
-
-  return { status: "created", token };
+  await saveInitialMatches(supabase, requestId, input);
+  const outboxId = await queueResultsEmail(supabase, requestId);
+  return { status: "created", token, outboxId };
 }
 
-export type ClientRequest = { id: string };
+/** What the client's own pages may show. No email or phone (ARCHITECTURE §2.7). */
+export type ClientRequest = {
+  id: string;
+  city: string;
+  neighborhoods: string[];
+  max_budget: number;
+  rooms_min: number;
+  rooms_max: number;
+  preferences_text: string;
+  notifications_active: boolean;
+};
 
 /** Finds a request by its link token. Invalid or unknown token → null (no details leak). */
 export async function getRequestByToken(token: string): Promise<ClientRequest | null> {
@@ -100,11 +133,50 @@ export async function getRequestByToken(token: string): Promise<ClientRequest | 
   const supabase = await createServiceClient();
   const { data, error } = await supabase
     .from("client_requests")
-    .select("id")
+    .select("id, city, neighborhoods, max_budget, rooms_min, rooms_max, preferences_text, notifications_active")
     .eq("access_token_hash", sha256(token))
     .maybeSingle();
   if (error) throw new Error(`getRequestByToken: ${error.message}`);
-  return data;
+  if (!data) return null;
+  return { ...data, rooms_min: Number(data.rooms_min), rooms_max: Number(data.rooms_max) } as ClientRequest;
+}
+
+/**
+ * "עדכון הקריטריונים" (PRD F5, ARCHITECTURE §2.6 D): saves the new criteria, retires the
+ * previous initial matches, matches again and queues a results email. Returns the outbox id.
+ */
+export async function updateCriteria(requestId: string, criteria: CriteriaInput): Promise<string | null> {
+  const supabase = await createServiceClient();
+  const { error } = await supabase
+    .from("client_requests")
+    .update({
+      city: criteria.city,
+      neighborhoods: criteria.neighborhoods,
+      max_budget: criteria.max_budget,
+      rooms_min: criteria.rooms_min,
+      rooms_max: criteria.rooms_max,
+      preferences_text: criteria.preferences_text,
+    })
+    .eq("id", requestId);
+  if (error) throw new Error(`updateCriteria: ${error.message}`);
+
+  const { error: retireError } = await supabase
+    .from("request_matches")
+    .update({ is_current: false })
+    .eq("request_id", requestId)
+    .eq("source", "initial")
+    .eq("is_current", true);
+  if (retireError) throw new Error(`updateCriteria: ${retireError.message}`);
+
+  await saveInitialMatches(supabase, requestId, criteria);
+  return queueResultsEmail(supabase, requestId);
+}
+
+/** "הפסקת עדכונים" / turning them back on (PRD F5). */
+export async function setNotifications(requestId: string, active: boolean): Promise<void> {
+  const supabase = await createServiceClient();
+  const { error } = await supabase.from("client_requests").update({ notifications_active: active }).eq("id", requestId);
+  if (error) throw new Error(`setNotifications: ${error.message}`);
 }
 
 type PropertyRow = Omit<PropertyInput, "address" | "description" | "expected_rent" | "estimated_yield"> & {

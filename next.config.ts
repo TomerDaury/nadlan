@@ -18,8 +18,19 @@ const nextConfig: NextConfig = {
     ],
   },
   async headers() {
-    // Personal links carry the access token in the URL: never send it on as a referrer (ARCHITECTURE §2.7).
-    return [{ source: "/r/:path*", headers: [{ key: "Referrer-Policy", value: "no-referrer" }] }];
+    // Personal links carry the access token in the URL: never send it to another site as a
+    // referrer, and never let search engines index them (ARCHITECTURE §2.7, ADR-16).
+    // "same-origin" rather than "no-referrer": with no-referrer the browser sends "Origin: null"
+    // on form posts, and Next.js rejects them as cross-site.
+    return [
+      {
+        source: "/r/:path*",
+        headers: [
+          { key: "Referrer-Policy", value: "same-origin" },
+          { key: "X-Robots-Tag", value: "noindex, nofollow" },
+        ],
+      },
+    ];
   },
   async redirects() {
     // The admin entry point is the properties screen.
