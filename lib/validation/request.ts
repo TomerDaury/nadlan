@@ -69,14 +69,22 @@ const requestFields = z.object({
 
 const roomsRange = requestFields.pick({ rooms_min: true, rooms_max: true });
 
-export const requestSchema = requestFields.refine((v) => v.rooms_min <= v.rooms_max, {
+const roomsOrder = {
   path: ["rooms_max"],
   message: "מספר החדרים המינימלי גדול מהמקסימלי",
   // Check the range even when other fields have errors, so all messages show at once.
-  when: (payload) => roomsRange.safeParse(payload.value).success,
-});
+  when: (payload: { value: unknown }) => roomsRange.safeParse(payload.value).success,
+};
+
+export const requestSchema = requestFields.refine((v) => v.rooms_min <= v.rooms_max, roomsOrder);
+
+/** "עדכון הקריטריונים" (PRD F5): the request fields without the personal details. */
+export const criteriaSchema = requestFields
+  .pick({ city: true, neighborhoods: true, max_budget: true, rooms_min: true, rooms_max: true, preferences_text: true })
+  .refine((v) => v.rooms_min <= v.rooms_max, roomsOrder);
 
 export type RequestInput = z.infer<typeof requestSchema>;
+export type CriteriaInput = z.infer<typeof criteriaSchema>;
 export type RequestField = keyof RequestInput;
 export type RequestFieldErrors = Partial<Record<RequestField, string>>;
 
@@ -106,10 +114,10 @@ export function requestFormValues(formData: FormData): Record<string, unknown> {
   return values;
 }
 
-export function parseRequest(
-  values: Record<string, unknown>
-): { success: true; data: RequestInput } | { success: false; fieldErrors: RequestFieldErrors } {
-  const result = requestSchema.safeParse(values);
+type ParseResult<T> = { success: true; data: T } | { success: false; fieldErrors: RequestFieldErrors };
+
+function parseWith<T>(schema: z.ZodType<T>, values: Record<string, unknown>): ParseResult<T> {
+  const result = schema.safeParse(values);
   if (result.success) return { success: true, data: result.data };
 
   const fieldErrors: RequestFieldErrors = {};
@@ -118,6 +126,15 @@ export function parseRequest(
     if (key && !fieldErrors[key]) fieldErrors[key] = issue.message;
   }
   return { success: false, fieldErrors };
+}
+
+export function parseRequest(values: Record<string, unknown>): ParseResult<RequestInput> {
+  return parseWith(requestSchema, values);
+}
+
+/** Same form reader (requestFormValues) — the personal fields are simply absent and ignored. */
+export function parseCriteria(values: Record<string, unknown>): ParseResult<CriteriaInput> {
+  return parseWith(criteriaSchema, values);
 }
 
 /** Closed-list check (server side): the city and every neighborhood must exist in available_areas. */

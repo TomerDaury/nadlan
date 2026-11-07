@@ -28,3 +28,18 @@ export function formatArea(city: string, neighborhoods: string[]): string {
 export function formatRoomsRange(min: number, max: number): string {
   return min === max ? `${min}` : `${min}–${max}`;
 }
+
+/** "הצפון הישן · 4 חד' · 95 מ"ר · קומה 3" parts — only the values that exist. */
+export function propertyDetails(property: {
+  neighborhood: string;
+  rooms: number;
+  area_sqm?: number | null;
+  floor?: number | null;
+}): string[] {
+  return [
+    property.neighborhood,
+    `${property.rooms} חד'`,
+    property.area_sqm ? `${property.area_sqm} מ"ר` : null,
+    property.floor === null || property.floor === undefined ? null : property.floor === 0 ? "קרקע" : `קומה ${property.floor}`,
+  ].filter((v): v is string => Boolean(v));
+}

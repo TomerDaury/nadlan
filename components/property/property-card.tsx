@@ -3,7 +3,7 @@ import { PropertyImage } from "@/components/property/property-image";
 import { Button } from "@/components/ui/button";
 import { FeatureTag } from "@/components/ui/feature-tag";
 import { TintBox } from "@/components/ui/tint-box";
-import { formatPrice } from "@/lib/format";
+import { formatPrice, propertyDetails } from "@/lib/format";
 import type { MatchCard } from "@/lib/services/requests";
 import { FEATURE_FIELDS } from "@/lib/validation/property";
 
@@ -11,16 +11,6 @@ type PropertyCardProps = {
   match: MatchCard;
   href: string;
 };
-
-/** "הצפון הישן · 4 חד' · 95 מ"ר · קומה 3" — only the values that exist. */
-function detailsLine(property: MatchCard["property"]): string[] {
-  return [
-    property.neighborhood,
-    `${property.rooms} חד'`,
-    property.area_sqm ? `${property.area_sqm} מ"ר` : null,
-    property.floor === null || property.floor === undefined ? null : property.floor === 0 ? "קרקע" : `קומה ${property.floor}`,
-  ].filter((v): v is string => Boolean(v));
-}
 
 // DESIGN.md §1.2 / §2.3 — property card on the results screen.
 export function PropertyCard({ match, href }: PropertyCardProps) {
@@ -39,7 +29,7 @@ export function PropertyCard({ match, href }: PropertyCardProps) {
           <p dir="ltr" className="text-end text-[20px] leading-7 font-semibold text-ink">
             {formatPrice(property.price)}
           </p>
-          <p className="mt-1 text-small text-slate-text">{detailsLine(property).join(" · ")}</p>
+          <p className="mt-1 text-small text-slate-text">{propertyDetails(property).join(" · ")}</p>
         </div>
 
         {features.length > 0 && (
