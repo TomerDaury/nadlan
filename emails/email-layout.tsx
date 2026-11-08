@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Body, Column, Container, Head, Html, Link, Preview, Row, Section, Text } from "@react-email/components";
+import { Body, Column, Container, Head, Html, Img, Link, Preview, Row, Section, Text } from "@react-email/components";
 
 // Shared frame for every email (PRD F4, F6): Hebrew, RTL, one column up to 600px so it reads
 // well on mobile. Colors and shapes follow the style guide (DESIGN.md §2); inline styles only,
@@ -47,10 +47,13 @@ export const secondaryButton = {
 export function EmailLayout({
   preview,
   unsubscribeUrl,
+  logoUrl,
   children,
 }: {
   preview: string;
   unsubscribeUrl: string;
+  /** Full URL of the logo PNG. Without it only the name placeholder is shown. */
+  logoUrl?: string;
   children: ReactNode;
 }) {
   return (
@@ -61,27 +64,22 @@ export function EmailLayout({
       <Preview>{preview}</Preview>
       <Body style={{ margin: 0, padding: "24px 0", backgroundColor: color.mist, fontFamily: font, direction: "rtl" }}>
         <Container style={{ maxWidth: 600, width: "100%", margin: "0 auto", padding: "0 12px" }}>
-          {/* Header: the logo mark (orange square with a house) and the business name placeholder. */}
+          {/* Header: the logo (house in front of a sun, public/logo-email.png) and the business name placeholder.
+              A PNG, because email clients do not show SVG. It loads from the site, so it shows only
+              when the site is reachable from the internet (not from localhost). */}
           <Section style={{ marginBottom: 20 }}>
             <Row>
               <Column align="right">
                 <Text style={{ ...text, fontSize: 16, fontWeight: 500 }}>
-                  <span
-                    style={{
-                      display: "inline-block",
-                      width: 28,
-                      height: 28,
-                      lineHeight: "28px",
-                      borderRadius: 8,
-                      backgroundColor: color.brand,
-                      color: "#ffffff",
-                      textAlign: "center",
-                      marginLeft: 8,
-                      verticalAlign: "middle",
-                    }}
-                  >
-                    ⌂
-                  </span>
+                  {logoUrl && (
+                    <Img
+                      src={logoUrl}
+                      alt=""
+                      width="28"
+                      height="28"
+                      style={{ display: "inline-block", width: 28, height: 28, borderRadius: 8, marginLeft: 8, verticalAlign: "middle" }}
+                    />
+                  )}
                   לוגו
                 </Text>
               </Column>

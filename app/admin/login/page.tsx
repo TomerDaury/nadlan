@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { Icon } from "@/components/icons";
+import { LogoMark } from "@/components/layout/logo-mark";
 import { LoginForm } from "@/app/admin/login/login-form";
 
 export const metadata: Metadata = { title: "כניסה לממשק הניהול" };
@@ -32,7 +32,7 @@ export default function AdminLoginPage({ searchParams }: PageProps<"/admin/login
 
       <section className="relative w-full max-w-[400px] rounded-card bg-white p-8 text-center shadow-floating">
         <span className="mx-auto mb-5 flex size-14 items-center justify-center rounded-card bg-brand-500 text-white">
-          <Icon name="home" className="size-7" strokeWidth={2} />
+          <LogoMark className="size-9" />
         </span>
         <h1 className="text-h3 font-medium text-ink">כניסה לממשק הניהול</h1>
         <p className="mt-1 mb-6 text-small text-slate-text">הכניסה מותרת לסוכן בלבד</p>

@@ -39,3 +39,10 @@ describe("NewPropertyEmail (PRD F6)", () => {
     expect(html).toContain(props.property.title);
   });
 });
+
+describe("email logo", () => {
+  it("shows the logo image when a logo URL is given", async () => {
+    const html = await render(<NewPropertyEmail {...props} logoUrl="https://example.test/logo-email.png" />);
+    expect(html).toContain('src="https://example.test/logo-email.png"');
+  });
+});

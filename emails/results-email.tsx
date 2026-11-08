@@ -17,6 +17,7 @@ export type ResultsEmailProps = {
   matches: ResultsEmailMatch[];
   personalUrl: string;
   unsubscribeUrl: string;
+  logoUrl?: string;
 };
 
 export function resultsSubject(count: number): string {
@@ -60,12 +61,13 @@ function MatchCard({ match }: { match: ResultsEmailMatch }) {
   );
 }
 
-export function ResultsEmail({ name, matches, personalUrl, unsubscribeUrl }: ResultsEmailProps) {
+export function ResultsEmail({ name, matches, personalUrl, unsubscribeUrl, logoUrl }: ResultsEmailProps) {
   const count = matches.length;
   return (
     <EmailLayout
       preview={count ? headline(name, count) : "לא נמצאו כרגע נכסים מתאימים. נעדכן אתכם כשייכנס נכס כזה."}
       unsubscribeUrl={unsubscribeUrl}
+      logoUrl={logoUrl}
     >
       <Text style={{ ...text, fontSize: 24, fontWeight: 500, lineHeight: "32px" }}>{headline(name, count)}</Text>
       <Text style={{ ...text, fontSize: 16, color: color.slate, lineHeight: "24px", marginTop: 8, marginBottom: 24 }}>

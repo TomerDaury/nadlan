@@ -92,6 +92,7 @@ async function buildResultsEmail(request: RequestRow): Promise<EmailMessage> {
       matches,
       personalUrl,
       unsubscribeUrl: `${personalUrl}/unsubscribe`,
+      logoUrl: `${baseUrl()}/logo-email.png`,
     }),
   };
 }
@@ -135,6 +136,7 @@ async function buildNewPropertyEmail(
       criteria: metCriteria({ ...property, rooms }, request),
       personalUrl,
       unsubscribeUrl: `${personalUrl}/unsubscribe`,
+      logoUrl: `${baseUrl()}/logo-email.png`,
     }),
   };
 }
