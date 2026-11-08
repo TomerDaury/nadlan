@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import Image from "next/image";
-import { cn } from "cn";
+import { cn } from "@/lib/utils";
 import { X } from "lucide-react";
 import { Icon } from "@/components/icons";
 import { Badge } from "@/components/ui/badge";

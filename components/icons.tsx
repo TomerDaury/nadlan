@@ -13,6 +13,7 @@ import {
   Mail,
   MapPin,
   MessageSquare,
+  Phone,
   Pencil,
   Plus,
   Search,
@@ -50,6 +51,7 @@ export const icons = {
   // Points right: "back" in an RTL interface.
   back: ChevronRight,
   message: MessageSquare,
+  phone: Phone,
   list: List,
   spinner: LoaderCircle,
 } satisfies Record<string, LucideIcon>;

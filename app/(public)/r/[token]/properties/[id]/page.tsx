@@ -2,9 +2,11 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { z } from "zod";
 import { Icon, type IconName } from "@/components/icons";
+import { AgentContact } from "@/components/property/agent-contact";
 import { InvalidLink } from "@/components/property/invalid-link";
 import { FeatureTag } from "@/components/ui/feature-tag";
 import { Panel } from "@/components/ui/panel";
+import { normalizePhone } from "@/lib/contact";
 import { formatPrice } from "@/lib/format";
 import { getMatchedProperty, getRequestByToken } from "@/lib/services/requests";
 import { CONDITION_LABELS, FEATURE_FIELDS } from "@/lib/validation/property";
@@ -36,6 +38,9 @@ async function PropertyDetails({ params }: { params: Params }) {
   const features = FEATURE_FIELDS.filter((f) => property[f.name]);
   const location = [property.address, property.neighborhood, property.city].filter(Boolean).join(", ");
   const hasInvestment = property.expected_rent !== null || property.estimated_yield !== null;
+  // Contact buttons (PRD F10) only when the agent phone is set and valid.
+  const agentPhone = normalizePhone(process.env.AGENT_PHONE);
+  if (process.env.AGENT_PHONE && !agentPhone) console.warn("AGENT_PHONE is not a valid phone number; contact buttons are hidden");
 
   return (
     <>
@@ -62,6 +67,7 @@ async function PropertyDetails({ params }: { params: Params }) {
             <p dir="ltr" className="mt-2 text-end text-[28px] leading-9 font-semibold text-ink">
               {formatPrice(property.price)}
             </p>
+            {agentPhone && <AgentContact phone={agentPhone} property={property} className="mt-4" />}
           </div>
 
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
