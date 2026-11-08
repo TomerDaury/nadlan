@@ -18,14 +18,15 @@ export type NewPropertyEmailProps = {
   criteria: string[];
   personalUrl: string;
   unsubscribeUrl: string;
+  logoUrl?: string;
 };
 
 export const NEW_PROPERTY_SUBJECT = "נכס חדש שמתאים לכם";
 
-export function NewPropertyEmail({ name, property, criteria, personalUrl, unsubscribeUrl }: NewPropertyEmailProps) {
+export function NewPropertyEmail({ name, property, criteria, personalUrl, unsubscribeUrl, logoUrl }: NewPropertyEmailProps) {
   const headline = `שלום ${name}, נכנס נכס חדש שמתאים לכם`;
   return (
-    <EmailLayout preview={`${headline}: ${property.title}`} unsubscribeUrl={unsubscribeUrl}>
+    <EmailLayout preview={`${headline}: ${property.title}`} unsubscribeUrl={unsubscribeUrl} logoUrl={logoUrl}>
       <Text style={{ ...text, fontSize: 24, fontWeight: 500, lineHeight: "32px" }}>{headline}</Text>
       <Text style={{ ...text, fontSize: 16, color: color.slate, lineHeight: "24px", marginTop: 8, marginBottom: 24 }}>
         הנכס הזה נוסף עכשיו למאגר, והוא עומד בקריטריונים של הפנייה שלכם.
