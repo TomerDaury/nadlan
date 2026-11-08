@@ -64,27 +64,18 @@ export function EmailLayout({
       <Preview>{preview}</Preview>
       <Body style={{ margin: 0, padding: "24px 0", backgroundColor: color.mist, fontFamily: font, direction: "rtl" }}>
         <Container style={{ maxWidth: 600, width: "100%", margin: "0 auto", padding: "0 12px" }}>
-          {/* Header: the logo (house in front of a sun, public/logo-email.png) and the business name placeholder.
+          {/* Header: the logo only (house in front of a sun, public/logo-email.png), no text.
               A PNG, because email clients do not show SVG. It loads from the site, so it shows only
               when the site is reachable from the internet (not from localhost). */}
-          <Section style={{ marginBottom: 20 }}>
-            <Row>
-              <Column align="right">
-                <Text style={{ ...text, fontSize: 16, fontWeight: 500 }}>
-                  {logoUrl && (
-                    <Img
-                      src={logoUrl}
-                      alt=""
-                      width="28"
-                      height="28"
-                      style={{ display: "inline-block", width: 28, height: 28, borderRadius: 8, marginLeft: 8, verticalAlign: "middle" }}
-                    />
-                  )}
-                  לוגו
-                </Text>
-              </Column>
-            </Row>
-          </Section>
+          {logoUrl && (
+            <Section style={{ marginBottom: 20 }}>
+              <Row>
+                <Column align="right">
+                  <Img src={logoUrl} alt="" width="32" height="32" style={{ display: "block", width: 32, height: 32, borderRadius: 8 }} />
+                </Column>
+              </Row>
+            </Section>
+          )}
 
           <Section style={{ backgroundColor: "#ffffff", borderRadius: 20, padding: "28px 24px" }}>{children}</Section>
 
