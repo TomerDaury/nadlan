@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { cn } from "cn";
+import { cn } from "@/lib/utils";
 import { X } from "lucide-react";
 
 type ChipProps = Omit<React.ComponentProps<"button">, "onChange"> & {

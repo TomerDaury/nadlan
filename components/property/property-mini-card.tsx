@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { cn } from "cn";
+import { cn } from "@/lib/utils";
 import { PropertyImage } from "@/components/property/property-image";
 import { Badge } from "@/components/ui/badge";
 import { formatPrice } from "@/lib/format";

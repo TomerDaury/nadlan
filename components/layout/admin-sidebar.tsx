@@ -3,7 +3,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { cn } from "cn";
+import { cn } from "@/lib/utils";
 import { Icon, type IconName } from "@/components/icons";
 
 const NAV_ITEMS: { href: string; label: string; icon: IconName }[] = [

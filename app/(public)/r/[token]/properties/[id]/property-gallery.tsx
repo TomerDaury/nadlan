@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { cn } from "cn";
+import { cn } from "@/lib/utils";
 import { PropertyImage } from "@/components/property/property-image";
 
 type PropertyGalleryProps = {

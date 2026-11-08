@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { cn } from "cn";
+import { cn } from "@/lib/utils";
 import { Icon, type IconName } from "@/components/icons";
 import { Badge } from "@/components/ui/badge";
 import { Panel } from "@/components/ui/panel";

@@ -1,5 +1,5 @@
 import * as React from "react";
-import { cn } from "cn";
+import { cn } from "@/lib/utils";
 
 // Shared field look (DESIGN.md §2.3): white, 1.5px #D6D6D6 border, radius 10,
 // orange border + 3px #FFE3CC ring on focus, red border when invalid.

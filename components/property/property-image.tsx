@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { cn } from "cn";
+import { cn } from "@/lib/utils";
 import { Icon } from "@/components/icons";
 import { publicImageUrl } from "@/lib/images";
 

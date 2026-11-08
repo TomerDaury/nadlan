@@ -1,5 +1,5 @@
 import * as React from "react";
-import { cn } from "cn";
+import { cn } from "@/lib/utils";
 
 type FeatureTagProps = React.ComponentProps<"span"> & {
   /** Prefix the text with a ✓ mark. */
