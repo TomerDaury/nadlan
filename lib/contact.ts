@@ -37,3 +37,15 @@ export function whatsappMessage(property: PropertyForMessage): string {
 export function whatsappHref(phone: string, property: PropertyForMessage): string {
   return `https://wa.me/${phone}?text=${encodeURIComponent(whatsappMessage(property))}`;
 }
+
+/**
+ * The phone number as Israelis write it: "050-1234567" (mobile), "03-1234567" (landline).
+ * Numbers from other countries are shown as "+<digits>".
+ */
+export function displayPhone(phone: string): string {
+  if (!phone.startsWith("972")) return `+${phone}`;
+  const local = `0${phone.slice(3)}`;
+  if (local.length === 10) return `${local.slice(0, 3)}-${local.slice(3)}`;
+  if (local.length === 9) return `${local.slice(0, 2)}-${local.slice(2)}`;
+  return local;
+}

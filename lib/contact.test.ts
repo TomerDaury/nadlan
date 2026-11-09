@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { normalizePhone, phoneHref, whatsappHref, whatsappMessage } from "@/lib/contact";
+import { displayPhone, normalizePhone, phoneHref, whatsappHref, whatsappMessage } from "@/lib/contact";
 
 const property = { title: "דירת 4 חדרים עם מרפסת", neighborhood: "נווה צדק", city: "תל אביב" };
 
@@ -42,5 +42,15 @@ describe("contact links", () => {
   it("never includes the client's personal link", () => {
     expect(whatsappHref("972501234567", property)).not.toContain("%2Fr%2F");
     expect(whatsappMessage(property)).not.toContain("/r/");
+  });
+});
+
+describe("displayPhone", () => {
+  it.each([
+    ["972501234567", "050-1234567"],
+    ["97231234567", "03-1234567"],
+    ["14155550100", "+14155550100"],
+  ])("%s → %s", (phone, expected) => {
+    expect(displayPhone(phone)).toBe(expected);
   });
 });
