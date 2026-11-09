@@ -1,11 +1,11 @@
 import { cn } from "@/lib/utils";
 import { Icon } from "@/components/icons";
 import { Button } from "@/components/ui/button";
-import { phoneHref, whatsappHref } from "@/lib/contact";
+import { displayPhone, phoneHref, whatsappHref } from "@/lib/contact";
 
 // DESIGN.md §1.3 / PRD F10 — contact the agent from the property details screen:
-// Primary "התקשרו לסוכן" (phone call) and Secondary "WhatsApp" (chat with a ready message).
-// Two equal columns, so on mobile each button fills half the row.
+// the agent's phone number as text (tappable on a phone) and a Secondary "WhatsApp" button
+// that opens a chat with a ready message about the property.
 export function AgentContact({
   phone,
   property,
@@ -17,13 +17,18 @@ export function AgentContact({
   className?: string;
 }) {
   return (
-    <div className={cn("grid grid-cols-2 gap-3", className)}>
-      <Button asChild>
-        <a href={phoneHref(phone)}>
-          <Icon name="phone" />
-          התקשרו לסוכן
+    <div className={cn("flex flex-wrap items-center justify-between gap-x-6 gap-y-3", className)}>
+      <p className="flex items-center gap-2 text-body text-ink">
+        <Icon name="phone" className="size-5 text-brand-500" />
+        <span className="text-slate-text">טלפון הסוכן:</span>
+        <a
+          href={phoneHref(phone)}
+          dir="ltr"
+          className="rounded-menu font-medium text-ink outline-none hover:underline focus-visible:ring-3 focus-visible:ring-focus-ring"
+        >
+          {displayPhone(phone)}
         </a>
-      </Button>
+      </p>
       <Button asChild variant="secondary">
         <a href={whatsappHref(phone, property)} target="_blank" rel="noopener noreferrer">
           <Icon name="message" />
